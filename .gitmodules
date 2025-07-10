@@ -1,0 +1,3 @@
+[submodule "refs/ucum"]
+	path = refs/ucum
+	url = https://github.com/ucum-org/ucum
