@@ -5,11 +5,12 @@ This directory contains comprehensive documentation for the TypeScript UCUM (Uni
 ## 📖 Documentation Index
 
 ### Core Components
-- **[Parser](./parser.md)** - Custom recursive descent parser with tokenizer
-- **[Unit Registry](./unit-registry.md)** - Singleton registry for units and prefixes  
-- **[Converter](./converter.md)** - Unit conversion engine with dimensional validation
-- **[Display Name Generator](./display-name-generator.md)** - Human-readable UCUM formatting
-- **[Type System](./type-system.md)** - TypeScript interfaces and type definitions
+- **[Parser](./components/parser.md)** - Custom recursive descent parser with tokenizer
+- **[Validator](./components/validator.md)** - Expression validation and error checking
+- **[Unit Registry](./components/unit-registry.md)** - Singleton registry for units and prefixes  
+- **[Converter](./components/converter.md)** - Unit conversion engine with dimensional validation
+- **[Display Name Generator](./components/display-name-generator.md)** - Human-readable UCUM formatting
+- **[Type System](./components/type-system.md)** - TypeScript interfaces and type definitions
 
 ### Architecture & Data
 - **[Generated Data](./generated-data.md)** - Auto-generated UCUM definitions from XML

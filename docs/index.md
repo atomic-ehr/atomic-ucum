@@ -16,6 +16,7 @@ System design, component relationships, and technical decisions.
 ### 🔧 Components
 Detailed documentation for each core component:
 - [Parser](./components/parser.md) - UCUM expression parser
+- [Validator](./components/validator.md) - Expression validation and error checking
 - [Converter](./components/converter.md) - Unit conversion engine
 - [Unit Registry](./components/unit-registry.md) - Unit and prefix registry
 - [Display Name Generator](./components/display-name-generator.md) - Human-readable names
