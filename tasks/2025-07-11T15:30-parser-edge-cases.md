@@ -1,4 +1,4 @@
-# Parser Edge Cases and Invalid Unit Validation [pending]
+# Parser Edge Cases and Invalid Unit Validation [completed]
 
 ## Overview
 
@@ -84,14 +84,22 @@ k=1=010: 'cm[H20]' - should reject (H20 vs H2O)
 
 ## Implementation Steps
 
-1. [ ] Fix annotation parsing at expression start
-2. [ ] Implement stricter number-unit tokenization
-3. [ ] Add validation rules for units and annotations
-4. [ ] Fix special unit conversion issues
-5. [ ] Update display name generator for new token types
-6. [ ] Run full test suite
-7. [ ] Document changes
-8. [ ] Update this task file
+This task has been split into 4 separate focused tasks:
+
+1. [x] Create separate task for annotation parsing issues
+2. [x] Create separate task for invalid unit validation  
+3. [x] Create separate task for special unit conversions
+4. [x] Create separate task for display name generation
+
+## Split Tasks Created
+
+1. **2025-07-11T15:35-annotation-parsing.md** - Fix Annotation Parsing at Expression Start (2 tests)
+2. **2025-07-11T15:36-invalid-unit-validation.md** - Implement Invalid Unit Validation (35 tests)
+3. **2025-07-11T15:37-special-unit-conversions.md** - Fix Remaining Special Unit Conversions (3 tests)
+4. **2025-07-11T15:38-display-name-generation.md** - Update Display Name Generator for Scientific Notation (1 test)
+
+Each task now has its own focused scope, implementation steps, and success criteria.
+
 
 ## Notes
 

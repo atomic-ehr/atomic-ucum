@@ -62,9 +62,22 @@ export class UCUMParser {
       annotations: []
     };
     
+    // Check for leading annotation
+    let hasLeadingAnnotation = false;
+    if (this.peek().type === TokenType.ANNOTATION) {
+      const annotation = this.advance().value;
+      result.annotations!.push(annotation);
+      hasLeadingAnnotation = true;
+      
+      // After annotation, we must have an operator (. or /) or end of expression
+      if (!this.isAtEnd() && this.peek().type !== TokenType.OPERATOR) {
+        throw new Error(`Expected operator after annotation at position ${this.peek().position}`);
+      }
+    }
+    
     // Check for leading number
     let hasLeadingNumber = false;
-    if (this.peek().type === TokenType.NUMBER) {
+    if (!hasLeadingAnnotation && this.peek().type === TokenType.NUMBER) {
       result.value = parseFloat(this.advance().value);
       hasLeadingNumber = true;
     }
@@ -79,16 +92,20 @@ export class UCUMParser {
       if (term.annotations) {
         result.annotations!.push(...term.annotations);
       }
-    } else if (!hasLeadingNumber || (hasLeadingNumber && this.peek().type === TokenType.OPERATOR && this.peek().value === '.')) {
-      // If we have a leading number followed by '.', or no leading number at all, parse term
-      if (hasLeadingNumber && this.peek().type === TokenType.OPERATOR && this.peek().value === '.') {
+    } else if (hasLeadingAnnotation || !hasLeadingNumber || (hasLeadingNumber && this.peek().type === TokenType.OPERATOR && this.peek().value === '.')) {
+      // If we have a leading annotation, number followed by '.', or no leading number at all, parse term
+      if ((hasLeadingAnnotation || hasLeadingNumber) && this.peek().type === TokenType.OPERATOR && this.peek().value === '.') {
         this.advance(); // consume the '.'
       }
-      const term = this.parseTerm();
-      result.value *= term.value;
-      this.mergeUnits(result.units, term.units, 1);
-      if (term.annotations) {
-        result.annotations!.push(...term.annotations);
+      
+      // Only parse term if we're not at the end
+      if (!this.isAtEnd()) {
+        const term = this.parseTerm();
+        result.value *= term.value;
+        this.mergeUnits(result.units, term.units, 1);
+        if (term.annotations) {
+          result.annotations!.push(...term.annotations);
+        }
       }
     }
     
@@ -143,15 +160,26 @@ export class UCUMParser {
     
     if (token.type === TokenType.ANNOTATION) {
       const annotation = this.advance().value;
-      // Check if there's more to parse after the annotation
-      if (this.isAtEnd()) {
-        // Just an annotation with no unit
-        return { value: 1, units: {}, annotations: [annotation] };
+      const result: ParsedUnit = { value: 1, units: {}, annotations: [annotation] };
+      
+      // After annotation in a term, we can have:
+      // 1. End of expression
+      // 2. An operator (which will be handled by parseExpression)
+      // 3. Another term (if operator is '.')
+      
+      if (this.isAtEnd() || this.peek().type === TokenType.OPERATOR) {
+        // Let parseExpression handle any operators
+        return result;
       }
-      const term = this.parseTerm();
-      if (!term.annotations) term.annotations = [];
-      term.annotations.push(annotation);
-      return term;
+      
+      // Otherwise, parse the next term and merge
+      const nextTerm = this.parseTerm();
+      result.value *= nextTerm.value;
+      this.mergeUnits(result.units, nextTerm.units, 1);
+      if (nextTerm.annotations) {
+        result.annotations!.push(...nextTerm.annotations);
+      }
+      return result;
     }
     
     if (token.type === TokenType.UNIT) {

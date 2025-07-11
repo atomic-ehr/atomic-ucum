@@ -18,13 +18,15 @@ The tokenizer performs lexical analysis, converting raw UCUM expressions into a 
 
 ```typescript
 enum TokenType {
-  NUMBER = 'NUMBER',           // 123, 4.5, 10*3, 10*-7
-  UNIT = 'UNIT',              // m, g, s, kg, mm
-  OPERATOR = 'OPERATOR',       // ., /, *
-  LPAREN = 'LPAREN',          // (
-  RPAREN = 'RPAREN',          // )
-  ANNOTATION = 'ANNOTATION',   // {annotation text}
-  EOF = 'EOF'                 // End of input
+  NUMBER = 'NUMBER',                   // 123, 4.5
+  UNIT = 'UNIT',                      // m, g, s, kg, mm
+  OPERATOR = 'OPERATOR',               // ., /
+  EXPONENT = 'EXPONENT',              // Direct exponent: -2, 3
+  LPAREN = 'LPAREN',                  // (
+  RPAREN = 'RPAREN',                  // )
+  ANNOTATION = 'ANNOTATION',           // {annotation text}
+  SCIENTIFIC_NOTATION = 'SCIENTIFIC_NOTATION', // 10*3, 10*-7
+  EOF = 'EOF'                         // End of input
 }
 
 interface Token {
@@ -36,11 +38,12 @@ interface Token {
 
 #### Key Features
 
-- **Scientific Notation**: Handles `10*3`, `10*-7` patterns
+- **Scientific Notation**: Handles `10*3`, `10*-7` patterns as special SCIENTIFIC_NOTATION tokens
 - **Unit Recognition**: Distinguishes units from numbers using registry lookup
 - **Annotation Extraction**: Preserves `{annotation}` text
 - **Position Tracking**: Records token positions for error reporting
 - **Unicode Support**: Handles special characters in annotations
+- **Leading Annotations**: Supports annotations at the beginning of expressions like `{a}.rad2`
 
 #### Example Tokenization
 
@@ -150,6 +153,28 @@ const result = parser.parse('m{length}/s{time}');
   value: 1,
   units: { 'm': 1, 's': -1 },
   annotations: ['length', 'time']
+}
+
+// Leading annotations are also supported:
+// Input: "{a}.rad2{b}"
+const result2 = parser.parse('{a}.rad2{b}');
+
+// Output:
+{
+  value: 1,
+  units: { 'rad': 2 },
+  annotations: ['a', 'b']
+}
+
+// Annotations after operators:
+// Input: "mL/{hb}.m2"
+const result3 = parser.parse('mL/{hb}.m2');
+
+// Output:
+{
+  value: 0.000001,
+  units: { 'm': 5 },
+  annotations: ['hb']
 }
 ```
 
