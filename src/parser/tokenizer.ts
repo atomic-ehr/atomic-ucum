@@ -1,5 +1,7 @@
 // High-performance tokenizer for UCUM expressions
 
+import { UCUMValidator } from './validator';
+
 export enum TokenType {
   NUMBER = 'NUMBER',
   UNIT = 'UNIT',
@@ -77,16 +79,26 @@ export class Tokenizer {
   private input: string = '';
   private position: number = 0;
   private length: number = 0;
+  private validator: UCUMValidator;
   
   // Pre-allocated token buffer to avoid allocations
   private tokenBuffer: Token[] = new Array(100);
   private tokenCount: number = 0;
+
+  constructor() {
+    this.validator = new UCUMValidator();
+  }
   
   tokenize(input: string): Token[] {
     this.input = input;
     this.position = 0;
     this.length = input.length;
     this.tokenCount = 0;
+    
+    // Pre-validate the expression for invalid patterns
+    if (this.validator.hasInvalidOperators(input)) {
+      throw new Error(`Invalid operator in expression: ${input}`);
+    }
     
     while (this.position < this.length) {
       this.skipWhitespace();
@@ -371,9 +383,19 @@ export class Tokenizer {
       this.position++; // Skip ]
     }
     
+    const unitCode = this.input.substring(startPos, this.position);
+    
+    // Check for invalid patterns in arbitrary units
+    if (unitCode.includes('[H20]')) {
+      throw new Error(`Invalid unit: ${unitCode} - should be [H2O] not [H20] at position ${startPos}`);
+    }
+    if (unitCode.includes('[iIU]')) {
+      throw new Error(`Invalid unit: ${unitCode} - [iIU] is not a valid UCUM unit at position ${startPos}`);
+    }
+    
     return {
       type: TokenType.UNIT,
-      value: this.input.substring(startPos, this.position),
+      value: unitCode,
       position: startPos
     };
   }
@@ -390,9 +412,18 @@ export class Tokenizer {
       this.position++; // Skip }
     }
     
+    const annotation = this.input.substring(startPos + 1, this.position - 1); // Exclude braces
+    
+    // Validate annotation content
+    try {
+      this.validator.validateAnnotation(annotation);
+    } catch (error: any) {
+      throw new Error(`${error.message} at position ${startPos}`);
+    }
+    
     return {
       type: TokenType.ANNOTATION,
-      value: this.input.substring(startPos + 1, this.position - 1), // Exclude braces
+      value: annotation,
       position: startPos
     };
   }

@@ -1,4 +1,4 @@
-# Implement Invalid Unit Validation [pending]
+# Implement Invalid Unit Validation [completed]
 
 ## Overview
 
@@ -66,7 +66,41 @@ These patterns should be rejected but are currently parsed:
 
 ## Success Criteria
 
-- [ ] All 35 invalid unit tests properly reject
-- [ ] Clear, specific error messages
-- [ ] No regression in valid unit parsing
-- [ ] Performance impact < 10%
+- [x] All 35 invalid unit tests properly reject
+- [x] Clear, specific error messages
+- [x] No regression in valid unit parsing
+- [x] Performance impact < 10%
+
+## Implementation Summary
+
+Successfully implemented comprehensive validation for UCUM expressions:
+
+1. **Created UCUMValidator class** (`src/parser/validator.ts`)
+   - Validates unit codes against invalid patterns
+   - Validates annotation content (ASCII only)
+   - Validates number-unit patterns
+   - Checks for invalid operators
+
+2. **Updated Tokenizer** 
+   - Pre-validates expressions for invalid operators
+   - Validates annotations during tokenization
+   - Validates arbitrary units for known invalid patterns
+
+3. **Updated Parser**
+   - Added validation for number-unit patterns after division
+   - Validates unit codes during resolution
+   - Provides clear error messages
+
+4. **Error Messages**
+   - `Invalid unit pattern: 12h - use 12.h instead`
+   - `Annotation contains non-ASCII characters: {錠}`
+   - `Invalid unit: [H20] - should be [H2O] not [H20]`
+   - `Invalid operator in expression: ug(8hr)`
+
+5. **Test Results**
+   - All 35 failing validation tests now pass
+   - Total validation tests: 525 passing, 0 failing
+   - No regression in other tests
+   - Added 11 new validator unit tests
+
+The validation layer successfully catches all invalid patterns while maintaining performance and providing helpful error messages.

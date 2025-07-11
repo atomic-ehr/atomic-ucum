@@ -2,6 +2,7 @@ import type { ParsedUnit } from '../types';
 import { UnitRegistry } from '../unit-registry';
 import { Tokenizer, TokenType } from './tokenizer';
 import type { Token } from './tokenizer';
+import { UCUMValidator } from './validator';
 
 // Cache for parsed expressions
 const PARSE_CACHE = new Map<string, ParsedUnit>();
@@ -10,6 +11,7 @@ const MAX_CACHE_SIZE = 1000;
 export class UCUMParser {
   private tokenizer: Tokenizer;
   private registry: UnitRegistry;
+  private validator: UCUMValidator;
   private tokens: Token[] = [];
   private current: number = 0;
   private depth: number = 0;
@@ -17,6 +19,7 @@ export class UCUMParser {
   constructor() {
     this.tokenizer = new Tokenizer();
     this.registry = UnitRegistry.getInstance();
+    this.validator = new UCUMValidator();
   }
   
   parse(expression: string): ParsedUnit {
@@ -121,6 +124,20 @@ export class UCUMParser {
       // Check for missing operand
       if (this.isAtEnd()) {
         throw new Error(`Invalid syntax: missing operand after ${op}`);
+      }
+      
+      // Check for invalid number-unit pattern after division
+      if (op === '/' && this.peek().type === TokenType.NUMBER) {
+        const numberToken = this.peek();
+        const nextPos = this.current + 1;
+        if (nextPos < this.tokens.length && this.tokens[nextPos]?.type === TokenType.UNIT) {
+          const unitToken = this.tokens[nextPos];
+          // Check if this forms an invalid pattern like "12h"
+          const combined = numberToken.value + unitToken.value;
+          if (!this.validator.validateNumberUnitPattern(combined)) {
+            throw new Error(`Invalid unit pattern: ${combined} - use ${numberToken.value}.${unitToken.value} instead`);
+          }
+        }
       }
       
       const nextTerm = this.parseTerm();
@@ -293,6 +310,13 @@ export class UCUMParser {
     // Handle special cases
     if (unitCode === '%') {
       return { value: 0.01, units: {} };
+    }
+    
+    // Validate the unit code
+    try {
+      this.validator.validateUnitCode(unitCode);
+    } catch (error: any) {
+      throw new Error(error.message);
     }
     
     // Check if this is a unit with inline exponent (e.g., m2, s-1)

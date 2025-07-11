@@ -203,6 +203,15 @@ const result2 = parser.parse('kg.m.s-2'); // Cache hit - returns cached
 
 ## 🛠️ Advanced Features
 
+### Validation
+
+The parser includes comprehensive validation for UCUM compliance:
+
+- **Invalid unit patterns**: Rejects patterns like `[H20]` (should be `[H2O]`)
+- **Number-unit validation**: Rejects `g/12h` (should be `g/12.h`)
+- **Annotation validation**: Only ASCII characters allowed
+- **Operator validation**: Rejects invalid operators like `+` except in scientific notation
+
 ### Error Handling
 
 The parser provides detailed error information:
@@ -212,6 +221,18 @@ try {
   parser.parse('kg..m'); // Invalid: double operator
 } catch (error) {
   console.log(error.message); // "Unexpected token: OPERATOR at position 3"
+}
+
+try {
+  parser.parse('g/12h'); // Invalid: missing operator
+} catch (error) {
+  console.log(error.message); // "Invalid unit pattern: 12h - use 12.h instead"
+}
+
+try {
+  parser.parse('rad2{錠}'); // Invalid: non-ASCII
+} catch (error) {
+  console.log(error.message); // "Annotation contains non-ASCII characters: {錠}"
 }
 ```
 
