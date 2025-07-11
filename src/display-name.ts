@@ -1,6 +1,6 @@
 import { UnitRegistry } from './unit-registry';
 import { UCUMParser } from './parser';
-import { ParsedUnit } from './types';
+import type { ParsedUnit } from './types';
 
 export class UCUMDisplayNameGenerator {
   private registry: UnitRegistry;
@@ -49,8 +49,8 @@ export class UCUMDisplayNameGenerator {
     // Handle simple units with annotations like m[H2O]
     if (expression.includes('[') && expression.includes(']')) {
       const parts = expression.split('[');
-      if (parts.length === 2) {
-        const baseUnit = parts[0];
+      if (parts.length === 2 && parts[1]) {
+        const baseUnit = parts[0] || '';
         const annotation = parts[1].replace(']', '');
         const baseDisplayName = this.getUnitDisplayName(baseUnit);
         
@@ -74,7 +74,7 @@ export class UCUMDisplayNameGenerator {
     const unitExponentMatch = expression.match(/^([a-zA-Z]+)(\d+)$/);
     if (unitExponentMatch) {
       const [, unitCode, exponent] = unitExponentMatch;
-      const displayName = this.getUnitDisplayName(unitCode);
+      const displayName = this.getUnitDisplayName(unitCode || '');
       return `(${displayName} ^ ${exponent})`;
     }
 
@@ -113,7 +113,7 @@ export class UCUMDisplayNameGenerator {
         const match = part.match(/^([a-zA-Z]+)(-?\d+)$/);
         if (match) {
           const [, unit, exponent] = match;
-          const displayName = this.getUnitDisplayName(unit);
+          const displayName = this.getUnitDisplayName(unit || '');
           displayParts.push(`${displayName} ^ ${exponent}`);
         }
       } else {
@@ -121,7 +121,7 @@ export class UCUMDisplayNameGenerator {
         const match = part.match(/^([a-zA-Z]+)(\d+)?$/);
         if (match) {
           const [, unit, exponent] = match;
-          const displayName = this.getUnitDisplayName(unit);
+          const displayName = this.getUnitDisplayName(unit || '');
           if (exponent) {
             displayParts.push(`${displayName} ^ ${exponent}`);
           } else {
@@ -149,7 +149,7 @@ export class UCUMDisplayNameGenerator {
       const [, leadingNum, bracket, powerExpr, numeratorUnit, denominatorUnit, denomExponent] = complexMatch;
       
       const parts: string[] = [];
-      parts.push(leadingNum);
+      parts.push(leadingNum || '');
       
       // Handle [pi] or other bracketed expressions
       if (bracket === '[pi]') {
@@ -157,17 +157,17 @@ export class UCUMDisplayNameGenerator {
       }
       
       // Handle 10*-7 style expressions
-      const powerParts = powerExpr.split('*');
+      const powerParts = (powerExpr || '').split('*');
       if (powerParts[0] === '10') {
-        parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1]})`);
+        parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1] || ''})`);
       }
       
       // Handle units
-      const numDisplayName = this.getUnitDisplayName(numeratorUnit);
+      const numDisplayName = this.getUnitDisplayName(numeratorUnit || '');
       parts.push(`(${numDisplayName})`);
       
       // Handle denominator with exponent
-      const denomDisplayName = this.getUnitDisplayName(denominatorUnit);
+      const denomDisplayName = this.getUnitDisplayName(denominatorUnit || '');
       const finalExponent = denomExponent || '2';
       
       return `${parts.join(' * ')} / (${denomDisplayName} ^ ${finalExponent})`;
@@ -192,18 +192,18 @@ export class UCUMDisplayNameGenerator {
           // Power expression like 10*-7
           const powerParts = part.split('*');
           if (powerParts[0] === '10') {
-            parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1]})`);
+            parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1] || ''})`);
           }
         } else if (part.includes('/')) {
           // Division expression
           const [num, denom] = part.split('/');
-          const numDisplay = this.getUnitDisplayName(num);
+          const numDisplay = this.getUnitDisplayName(num || '');
           
           // Check if denominator has exponent
-          const denomMatch = denom.match(/^([A-Z]+)(\d+)$/);
+          const denomMatch = denom?.match(/^([A-Z]+)(\d+)$/);
           if (denomMatch) {
             const [, unit, exp] = denomMatch;
-            const denomDisplay = this.getUnitDisplayName(unit);
+            const denomDisplay = this.getUnitDisplayName(unit || '');
             
             if (parts.length > 0) {
               return `${parts.join(' * ')} * (${numDisplay}) / (${denomDisplay} ^ ${exp})`;
@@ -231,7 +231,7 @@ export class UCUMDisplayNameGenerator {
     // For display purposes, we want to show the original unit name, not the conversion
     if (parsed.value !== 1 && Object.keys(parsed.units).length === 1) {
       const unitCode = Object.keys(parsed.units)[0];
-      const exponent = parsed.units[unitCode];
+      const exponent = unitCode ? parsed.units[unitCode] : undefined;
       
       // Check if this is a simple prefixed unit case
       if (exponent === 1 && this.findPrefixedUnit(originalExpression)) {
@@ -256,7 +256,7 @@ export class UCUMDisplayNameGenerator {
 
     // Separate positive and negative exponents
     Object.entries(parsed.units).forEach(([unitCode, exponent]) => {
-      const displayName = this.getUnitDisplayName(unitCode);
+      const displayName = this.getUnitDisplayName(unitCode || '');
       const formattedUnit = exponent === 1 ? displayName : `${displayName} ^ ${exponent}`;
       
       if (exponent > 0) {
@@ -302,7 +302,7 @@ export class UCUMDisplayNameGenerator {
       const [, leadingNum, bracket, powerExpr, numeratorUnit, denominatorUnit, denomExponent] = complexMatch;
       
       const parts: string[] = [];
-      parts.push(leadingNum);
+      parts.push(leadingNum || '');
       
       // Handle [pi] or other bracketed expressions
       if (bracket === '[pi]') {
@@ -310,17 +310,17 @@ export class UCUMDisplayNameGenerator {
       }
       
       // Handle 10*-7 style expressions
-      const powerParts = powerExpr.split('*');
+      const powerParts = (powerExpr || '').split('*');
       if (powerParts[0] === '10') {
-        parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1]})`);
+        parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1] || ''})`);
       }
       
       // Handle units
-      const numDisplayName = this.getUnitDisplayName(numeratorUnit);
+      const numDisplayName = this.getUnitDisplayName(numeratorUnit || '');
       parts.push(`(${numDisplayName})`);
       
       // Handle denominator with exponent
-      const denomDisplayName = this.getUnitDisplayName(denominatorUnit);
+      const denomDisplayName = this.getUnitDisplayName(denominatorUnit || '');
       const finalExponent = denomExponent || '2';
       
       return `${parts.join(' * ')} / (${denomDisplayName} ^ ${finalExponent})`;
@@ -339,7 +339,7 @@ export class UCUMDisplayNameGenerator {
     const unitExponentMatch = expression.match(/^([a-zA-Z]+)(\d+)$/);
     if (unitExponentMatch) {
       const [, unitCode, exponent] = unitExponentMatch;
-      const displayName = this.getUnitDisplayName(unitCode);
+      const displayName = this.getUnitDisplayName(unitCode || '');
       return `(${displayName} ^ ${exponent})`;
     }
 
@@ -390,8 +390,8 @@ export class UCUMDisplayNameGenerator {
     if (unitCode.includes('[') && unitCode.includes(']')) {
       // Units like m[H2O]
       const parts = unitCode.split('[');
-      if (parts.length === 2) {
-        const baseUnit = parts[0];
+      if (parts.length === 2 && parts[1]) {
+        const baseUnit = parts[0] || '';
         const annotation = parts[1].replace(']', '');
         const baseDisplayName = this.getUnitDisplayName(baseUnit);
         

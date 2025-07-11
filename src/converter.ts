@@ -1,4 +1,4 @@
-import { ConversionResult, ConversionOptions, ParsedUnit, DimensionVector } from './types';
+import type { ConversionResult, ConversionOptions, ParsedUnit, DimensionVector } from './types';
 import { UCUMParser } from './parser';
 import { UnitRegistry } from './unit-registry';
 import { DimensionCalculator } from './generated/dimension-analyzer';

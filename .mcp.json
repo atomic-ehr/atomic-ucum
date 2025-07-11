@@ -4,7 +4,7 @@
       "command": "mcp-language-server",
       "args": [
         "--workspace",
-        "/Users/niquola/ucum",
+        "/Users/niquola/atomic-ehr-org/atomic-ucum",
         "--lsp",
         "typescript-language-server",
         "--",

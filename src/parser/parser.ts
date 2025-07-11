@@ -1,6 +1,7 @@
-import { ParsedUnit } from '../types';
+import type { ParsedUnit } from '../types';
 import { UnitRegistry } from '../unit-registry';
-import { Tokenizer, Token, TokenType } from './tokenizer';
+import { Tokenizer, TokenType } from './tokenizer';
+import type { Token } from './tokenizer';
 
 // Cache for parsed expressions
 const PARSE_CACHE = new Map<string, ParsedUnit>();
@@ -38,7 +39,7 @@ export class UCUMParser {
       // Simple LRU: clear half the cache
       const keys = Array.from(PARSE_CACHE.keys());
       for (let i = 0; i < MAX_CACHE_SIZE / 2; i++) {
-        PARSE_CACHE.delete(keys[i]);
+        PARSE_CACHE.delete(keys[i] || '');
       }
     }
     PARSE_CACHE.set(expression, this.cloneResult(result));
@@ -199,7 +200,7 @@ export class UCUMParser {
       const exp = this.parseExponent();
       result.value = Math.pow(result.value, exp);
       for (const unit in result.units) {
-        result.units[unit] *= exp;
+        result.units[unit] = (result.units[unit] ?? 0) * exp;
       }
     }
     
@@ -234,7 +235,7 @@ export class UCUMParser {
     if (exponent !== 1) {
       unitData.value = Math.pow(unitData.value, exponent);
       for (const unit in unitData.units) {
-        unitData.units[unit] *= exponent;
+        unitData.units[unit] = (unitData.units[unit] ?? 0) * exponent;
       }
     }
     
@@ -274,14 +275,14 @@ export class UCUMParser {
     // Check if this is a unit with inline exponent (e.g., m2, s-1)
     const exponentMatch = unitCode.match(/^([a-zA-Z]+)(-?\d+)$/);
     if (exponentMatch) {
-      const baseUnit = exponentMatch[1];
-      const exponent = parseInt(exponentMatch[2]);
+      const baseUnit = exponentMatch[1] || '';
+      const exponent = parseInt(exponentMatch[2] || '0');
       const baseResult = this.resolveUnit(baseUnit);
       
       // Apply exponent
       baseResult.value = Math.pow(baseResult.value, exponent);
       for (const unit in baseResult.units) {
-        baseResult.units[unit] *= exponent;
+        baseResult.units[unit] = (baseResult.units[unit] ?? 0) * exponent;
       }
       return baseResult;
     }
@@ -473,7 +474,7 @@ export class UCUMParser {
   
   private mergeUnits(target: Record<string, number>, source: Record<string, number>, multiplier: number): void {
     for (const unit in source) {
-      const exponent = source[unit] * multiplier;
+      const exponent = (source[unit] ?? 0) * multiplier;
       if (target[unit]) {
         target[unit] += exponent;
         if (target[unit] === 0) {
@@ -486,14 +487,14 @@ export class UCUMParser {
   }
   
   private peek(): Token {
-    return this.tokens[this.current];
+    return this.tokens[this.current] || { type: TokenType.EOF, value: '', position: this.current };
   }
   
   private advance(): Token {
     if (!this.isAtEnd()) {
       this.current++;
     }
-    return this.tokens[this.current - 1];
+    return this.tokens[this.current - 1] || { type: TokenType.EOF, value: '', position: this.current - 1 };
   }
   
   private isAtEnd(): boolean {

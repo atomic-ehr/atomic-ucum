@@ -123,7 +123,7 @@ export class Tokenizer {
   }
   
   private getCharType(charCode: number): CharType {
-    return charCode < 128 ? CHAR_TYPES[charCode] : CharType.OTHER;
+    return charCode < 128 ? (CHAR_TYPES[charCode] ?? CharType.OTHER) : CharType.OTHER;
   }
   
   private nextToken(): Token | null {
@@ -178,7 +178,7 @@ export class Tokenizer {
           return this.readExponent();
         }
         this.position++;
-        return { type: TokenType.OPERATOR, value: this.input[startPos], position: startPos };
+        return { type: TokenType.OPERATOR, value: this.input[startPos] || '', position: startPos };
         
       default:
         // Handle other characters

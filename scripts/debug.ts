@@ -22,7 +22,7 @@ if (complexMatch) {
   });
   
   const parts: string[] = [];
-  parts.push(leadingNum);
+  parts.push(leadingNum || '');
   
   // Handle [pi] or other bracketed expressions
   if (bracket === '[pi]') {
@@ -30,7 +30,7 @@ if (complexMatch) {
   }
   
   // Handle 10*-7 style expressions
-  const powerParts = powerExpr.split('*');
+  const powerParts = (powerExpr || '').split('*');
   if (powerParts[0] === '10') {
     parts.push(`(the number ten for arbitrary powers ^ ${powerParts[1]})`);
   }
@@ -55,7 +55,7 @@ try {
   const parsed = parser.parse(expression);
   console.log("Parser succeeded with:", JSON.stringify(parsed, null, 2));
 } catch (error) {
-  console.log("Parser failed with:", error.message);
+  console.log("Parser failed with:", error instanceof Error ? error.message : String(error));
 }
 
 // Test generateSimple directly

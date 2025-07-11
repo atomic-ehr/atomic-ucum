@@ -6,6 +6,7 @@ alwaysApply: false
 
 Official website: https://ucum.org/
 * Use: bun mcp and lsp mcp
+* Use ast-grep to search for code, refactoring and linting in the project
 * Use context7 mcp to get docs about libraries
 * Use ./refs/ucum/ as official UCUM specification
 * Use bun mcp test tool or `bun test` to run tests

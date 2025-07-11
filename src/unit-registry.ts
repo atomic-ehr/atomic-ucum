@@ -1,4 +1,4 @@
-import { Unit, Prefix, DimensionVector } from './types';
+import type { Unit, Prefix, DimensionVector } from './types';
 import { UCUM_PREFIXES, UCUM_BASE_UNITS, UCUM_DERIVED_UNITS, UCUM_SPECIAL_UNITS } from './generated/ucum-definitions';
 import { BASE_DIMENSIONS, DERIVED_DIMENSIONS } from './generated/dimension-analyzer';
 
@@ -64,7 +64,7 @@ export class UnitRegistry {
           code: unit.code,
           codeUC: unit.codeUC,
           name: unit.name,
-          printSymbol: unit.printSymbol,
+          printSymbol: 'printSymbol' in unit ? unit.printSymbol : unit.code,
           property: unit.property,
           isBase: false,
           isMetric: unit.isMetric,
@@ -84,7 +84,7 @@ export class UnitRegistry {
         code: unit.code,
         codeUC: unit.codeUC,
         name: unit.name,
-        printSymbol: unit.printSymbol,
+        printSymbol: 'printSymbol' in unit ? unit.printSymbol : unit.code,
         property: unit.property,
         isBase: false,
         isMetric: unit.isMetric,

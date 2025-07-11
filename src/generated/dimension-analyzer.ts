@@ -155,14 +155,14 @@ export class DimensionCalculator {
    * Add two dimension vectors
    */
   static add(a: DimensionVector, b: DimensionVector): DimensionVector {
-    return a.map((val, i) => val + b[i]) as DimensionVector;
+    return a.map((val, i) => val + (b[i] ?? 0)) as DimensionVector;
   }
   
   /**
    * Subtract dimension vector b from a
    */
   static subtract(a: DimensionVector, b: DimensionVector): DimensionVector {
-    return a.map((val, i) => val - b[i]) as DimensionVector;
+    return a.map((val, i) => val - (b[i] ?? 0)) as DimensionVector;
   }
   
   /**
@@ -196,9 +196,9 @@ export class DimensionCalculator {
     dim.forEach((exp, i) => {
       if (exp !== 0) {
         if (exp === 1) {
-          parts.push(names[i]);
+          parts.push(names[i] || '');
         } else {
-          parts.push(`${names[i]}^${exp}`);
+          parts.push(`${names[i] || ''}^${exp}`);
         }
       }
     });
@@ -216,7 +216,7 @@ export class DimensionCalculator {
     dim.forEach((exp, i) => {
       if (exp !== 0) {
         if (exp === 1) {
-          parts.push(units[i]);
+          parts.push(units[i] || '');
         } else if (exp === -1) {
           parts.push(`/${units[i]}`);
         } else if (exp > 0) {

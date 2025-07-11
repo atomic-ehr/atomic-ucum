@@ -1,4 +1,4 @@
-import { UCUMParser, UCUMConverter, UnitRegistry } from './src';
+import { UCUMParser, UCUMConverter, UnitRegistry } from '../src';
 
 // Initialize the parser and converter
 const parser = new UCUMParser();
@@ -36,16 +36,16 @@ console.log('\n4. Checking unit compatibility:');
 try {
   const invalid = converter.convert(1, 'kg', 'm');
 } catch (error) {
-  console.log('kg to m:', error.message);
+  console.log('kg to m:', error instanceof Error ? error.message : String(error));
 }
 
 // Example 5: Get units by property
 console.log('\n5. Units by property:');
 const lengthUnits = registry.getUnitsByProperty('length');
-console.log(`Length units: ${lengthUnits.map(u => u.code).slice(0, 5).join(', ')}...`);
+console.log(`Length units: ${lengthUnits.map((u: any) => u.code).slice(0, 5).join(', ')}...`);
 
 const timeUnits = registry.getUnitsByProperty('time');
-console.log(`Time units: ${timeUnits.map(u => u.code).slice(0, 5).join(', ')}...`);
+console.log(`Time units: ${timeUnits.map((u: any) => u.code).slice(0, 5).join(', ')}...`);
 
 // Example 6: Complex unit expressions
 console.log('\n6. Complex unit expressions:');
