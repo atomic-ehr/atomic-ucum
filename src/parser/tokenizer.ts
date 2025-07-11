@@ -8,6 +8,7 @@ export enum TokenType {
   LPAREN = 'LPAREN',
   RPAREN = 'RPAREN',
   ANNOTATION = 'ANNOTATION',
+  SCIENTIFIC_NOTATION = 'SCIENTIFIC_NOTATION',
   EOF = 'EOF'
 }
 
@@ -140,11 +141,33 @@ export class Tokenizer {
         
       case CharType.DOT:
         this.position++;
-        // Check if it's a decimal number
+        // Check if it's a decimal number (.123) but not if it's .10* (scientific notation)
         if (this.position < this.length && 
             this.getCharType(this.input.charCodeAt(this.position)) === CharType.DIGIT) {
-          this.position = startPos; // Reset
-          return this.readNumber();
+          // Look ahead to see if this could be .10*
+          const lookaheadPos = this.position;
+          let isScientific = false;
+          if (this.position + 2 < this.length &&
+              this.input[this.position] === '1' && 
+              this.input[this.position + 1] === '0' &&
+              this.input[this.position + 2] === '*') {
+            // Check if there's an exponent after *
+            let expPos = this.position + 3;
+            if (expPos < this.length) {
+              if (this.input[expPos] === '+' || this.input[expPos] === '-') {
+                expPos++;
+              }
+              if (expPos < this.length && 
+                  this.getCharType(this.input.charCodeAt(expPos)) === CharType.DIGIT) {
+                isScientific = true;
+              }
+            }
+          }
+          
+          if (!isScientific) {
+            this.position = startPos; // Reset
+            return this.readNumber();
+          }
         }
         return { type: TokenType.OPERATOR, value: '.', position: startPos };
         
@@ -199,6 +222,45 @@ export class Tokenizer {
     while (this.position < this.length && 
            this.getCharType(this.input.charCodeAt(this.position)) === CharType.DIGIT) {
       this.position++;
+    }
+    
+    // Check for UCUM scientific notation (10*n pattern)
+    if (this.position - startPos === 2 && 
+        this.input.substring(startPos, this.position) === '10' &&
+        this.position < this.length && 
+        this.input[this.position] === '*') {
+      
+      const asteriskPos = this.position;
+      this.position++; // consume *
+      
+      // Check for optional sign and digits
+      let hasExponent = false;
+      if (this.position < this.length) {
+        let expPos = this.position;
+        if (this.input[expPos] === '+' || this.input[expPos] === '-') {
+          expPos++;
+        }
+        if (expPos < this.length && 
+            this.getCharType(this.input.charCodeAt(expPos)) === CharType.DIGIT) {
+          this.position = expPos;
+          while (this.position < this.length && 
+                 this.getCharType(this.input.charCodeAt(this.position)) === CharType.DIGIT) {
+            this.position++;
+          }
+          hasExponent = true;
+        }
+      }
+      
+      if (hasExponent) {
+        return {
+          type: TokenType.SCIENTIFIC_NOTATION,
+          value: this.input.substring(startPos, this.position),
+          position: startPos
+        };
+      } else {
+        // Not scientific notation, reset to after "10"
+        this.position = asteriskPos;
+      }
     }
     
     // Read decimal part if present

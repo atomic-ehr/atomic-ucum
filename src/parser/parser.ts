@@ -63,8 +63,10 @@ export class UCUMParser {
     };
     
     // Check for leading number
+    let hasLeadingNumber = false;
     if (this.peek().type === TokenType.NUMBER) {
       result.value = parseFloat(this.advance().value);
+      hasLeadingNumber = true;
     }
     
     // Check for leading division operator (e.g., /m means 1/m)
@@ -77,8 +79,11 @@ export class UCUMParser {
       if (term.annotations) {
         result.annotations!.push(...term.annotations);
       }
-    } else {
-      // Parse the main term
+    } else if (!hasLeadingNumber || (hasLeadingNumber && this.peek().type === TokenType.OPERATOR && this.peek().value === '.')) {
+      // If we have a leading number followed by '.', or no leading number at all, parse term
+      if (hasLeadingNumber && this.peek().type === TokenType.OPERATOR && this.peek().value === '.') {
+        this.advance(); // consume the '.'
+      }
       const term = this.parseTerm();
       result.value *= term.value;
       this.mergeUnits(result.units, term.units, 1);
@@ -153,32 +158,22 @@ export class UCUMParser {
       return this.parseUnit();
     }
     
+    if (token.type === TokenType.SCIENTIFIC_NOTATION) {
+      const sciToken = this.advance();
+      // Parse the scientific notation value (e.g., "10*3" => 1000, "10*-7" => 0.0000001)
+      const match = sciToken.value.match(/^10\*([-+]?\d+)$/);
+      if (match) {
+        const exponent = parseInt(match[1] ?? '0');
+        const value = Math.pow(10, exponent);
+        return { value, units: {} };
+      }
+      throw new Error(`Invalid scientific notation: ${sciToken.value}`);
+    }
+    
     if (token.type === TokenType.NUMBER) {
-      // Handle standalone number or special case: 10*6 or 10^6
-      const num = this.advance();
-      if (this.peek().type === TokenType.OPERATOR && this.peek().value === '*') {
-        this.advance(); // consume *
-        const nextToken = this.peek();
-        if (nextToken.type === TokenType.NUMBER || nextToken.type === TokenType.EXPONENT) {
-          const exp = this.advance();
-          const value = Math.pow(10, parseFloat(exp.value));
-          return { value, units: {} };
-        } else {
-          // Put back the * operator
-          this.current--;
-        }
-      }
-      // Put the number back by decrementing current
-      this.current--;
-      
-      // Check if this number is followed by a unit
-      if (this.peek().type === TokenType.UNIT) {
-        return this.parseUnit();
-      } else {
-        // Standalone number (e.g., in "5" or "10*3/ul" where 10*3 is parsed separately)
-        this.advance(); // consume the number again
-        return { value: parseFloat(token.value), units: {} };
-      }
+      // Handle standalone number
+      const value = parseFloat(this.advance().value);
+      return { value, units: {} };
     }
     
     throw new Error(`Unexpected token: ${token.type} at position ${token.position}`);
@@ -312,6 +307,11 @@ export class UCUMParser {
     // For base units and special units, just return as-is
     if (unit.isBase || unit.isSpecial || !unit.value?.unit) {
       return { value: 1, units: { [unit.code]: 1 } };
+    }
+    
+    // Handle dimensionless units like [pi] that have a numeric value
+    if (unit.value?.unit === '1' && unit.value?.value) {
+      return { value: unit.value.value, units: {} };
     }
     
     // For derived units, expand to base units
