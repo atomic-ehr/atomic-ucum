@@ -14,22 +14,26 @@ The UCUM Converter handles unit conversions with dimensional validation, ensurin
 class UCUMConverter {
   private registry: UnitRegistry;
   private parser: UCUMParser;
+  private specialConverter: SpecialConverter;
   
   constructor() {
     this.registry = UnitRegistry.getInstance();
     this.parser = new UCUMParser();
+    this.specialConverter = new SpecialConverter();
   }
 }
 ```
 
 ### Conversion Strategy
 
-The converter uses a magnitude-based approach with dimensional validation:
+The converter uses a two-stage approach:
 
-1. **Parse Units**: Convert string expressions to ParsedUnit objects
-2. **Validate Compatibility**: Check dimensional compatibility
-3. **Calculate Conversion Factor**: Determine magnitude difference
-4. **Apply Conversion**: Multiply value by conversion factor
+1. **Check for Special Conversions**: Try SpecialConverter first for non-linear conversions
+2. **Regular Conversions**: If not special, use magnitude-based approach:
+   - Parse Units: Convert string expressions to ParsedUnit objects
+   - Validate Compatibility: Check dimensional compatibility
+   - Calculate Conversion Factor: Determine magnitude difference
+   - Apply Conversion: Multiply value by conversion factor
 
 ## 🔄 Core Methods
 
@@ -398,26 +402,64 @@ test("should throw on incompatible conversions", () => {
 });
 ```
 
+## ⚡ Special Conversions
+
+### Temperature Conversions
+
+The converter handles temperature conversions with proper offset handling:
+
+```typescript
+// Celsius ↔ Fahrenheit
+converter.convert(0, 'Cel', '[degF]');      // 32
+converter.convert(100, 'Cel', '[degF]');    // 212
+converter.convert(32, '[degF]', 'Cel');     // 0
+
+// Celsius ↔ Kelvin
+converter.convert(0, 'Cel', 'K');           // 273.15
+converter.convert(273.15, 'K', 'Cel');      // 0
+
+// Fahrenheit ↔ Kelvin
+converter.convert(32, '[degF]', 'K');       // 273.15
+converter.convert(273.15, 'K', '[degF]');   // 32
+
+// Réaumur conversions
+converter.convert(0, '[degRe]', 'Cel');     // 0
+converter.convert(80, '[degRe]', 'Cel');    // 100
+```
+
+### Logarithmic Units
+
+pH and logarithmic unit conversions:
+
+```typescript
+// pH conversions
+converter.convert(7, 'pH', 'mol/L');        // 1e-7 (neutral pH)
+converter.convert(1e-7, 'mol/L', 'pH');     // 7
+
+// Bel and Neper
+converter.convert(1, 'B', 'Np');            // 1.151
+converter.convert(1, 'Np', 'B');            // 0.868
+
+// Decibel conversions
+converter.convert(10, 'dB', 'B');           // 1
+converter.convert(20, 'dB', 'B');           // 2
+```
+
+### Molecular Conversions
+
+Conversions requiring additional parameters:
+
+```typescript
+// Mol to mass (requires molecular weight)
+converter.convert(1, 'mol', 'g', { molecularWeight: 18 });    // 18 (water)
+converter.convert(2, 'mol', 'g', { molecularWeight: 58.44 }); // 116.88 (NaCl)
+
+// Equivalents (requires charge)
+converter.convert(1, 'mol', 'eq', { charge: 2 });  // 2 (Ca2+)
+converter.convert(1, 'mol', 'eq', { charge: 3 });  // 3 (Al3+)
+```
+
 ## 🔮 Future Enhancements
-
-### Special Conversions (Planned)
-
-1. **Temperature Conversions**: Celsius, Fahrenheit with offset handling
-   ```typescript
-   converter.convert(0, 'Cel', '[degF]');      // 32
-   converter.convert(100, 'Cel', 'K');         // 373.15
-   ```
-
-2. **Logarithmic Units**: pH, decibel calculations
-   ```typescript
-   converter.convert(7, '[pH]', 'mol/L');      // 1e-7
-   converter.convert(2, 'B', 'dB');            // 20
-   ```
-
-3. **Mol-Mass Conversions**: With molecular weight
-   ```typescript
-   converter.convert(1, 'mol', 'g', { molecularWeight: 18 }); // 18 (water)
-   ```
 
 ### Advanced Features
 

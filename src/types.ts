@@ -44,3 +44,10 @@ export interface ConversionOptions {
   molecularWeight?: number;    // For mol-mass conversions
   charge?: number;             // For equivalent conversions
 }
+
+export type SpecialConversionFunction = (
+  value: number,
+  fromUnit: string,
+  toUnit: string,
+  options?: ConversionOptions
+) => number | null;

@@ -19,6 +19,10 @@ This document describes the architecture of the TypeScript UCUM (Unified Code fo
 │  │             │  │             │  │   (Singleton)       │    │
 │  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘    │
 │         │                 │                     │                │
+│  ┌─────────────┐                                                │
+│  │   Special   │  (Temperature, Logarithmic, Molecular)         │
+│  │  Converter  │                                                │
+│  └─────────────┘                                                │
 ├─────────┴─────────────────┴─────────────────────┴───────────────┤
 │                    Infrastructure Layer                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐    │
@@ -35,6 +39,7 @@ src/
 ├── index.ts              # Main entry point and public API exports
 ├── types.ts              # TypeScript type definitions
 ├── converter.ts          # Unit conversion engine
+├── special-converter.ts  # Special unit conversions (temperature, logarithmic, etc.)
 ├── unit-registry.ts      # Unit and prefix registry (singleton)
 ├── display-name.ts       # Human-readable name generator
 ├── parser.ts             # Re-export for parser module
@@ -71,10 +76,15 @@ normalize(expression: string): string
 
 **Key Features**:
 - Regular unit conversions (magnitude-based)
-- Special conversions (temperature, pH, logarithmic)
+- Special conversions via SpecialConverter
 - Dimension compatibility validation
 - Annotation handling
 - Error handling for incompatible units
+
+**Dependencies**:
+- Uses SpecialConverter for non-linear conversions
+- Integrates with UCUMParser for unit parsing
+- Queries UnitRegistry for unit definitions
 
 **Public API**:
 ```typescript
@@ -83,7 +93,32 @@ canConvert(from: string, to: string): boolean
 toBaseUnits(expression: string): ParsedUnit
 ```
 
-### 3. UnitRegistry (`unit-registry.ts`)
+### 3. SpecialConverter (`special-converter.ts`)
+
+**Purpose**: Handles non-linear unit conversions that require special formulas
+
+**Key Features**:
+- Temperature conversions (Celsius, Fahrenheit, Kelvin, Réaumur)
+- Logarithmic conversions (pH, Bel, Neper, Decibel)
+- Molecular conversions (mol to mass, equivalents)
+- Extensible architecture for adding new conversions
+- Bidirectional conversion registration
+
+**Special Conversions Supported**:
+- Temperature: Cel ↔ K ↔ [degF] ↔ [degRe]
+- pH: pH ↔ mol/L (hydrogen ion concentration)
+- Logarithmic: B ↔ Np ↔ dB
+- Molecular: mol ↔ g (requires molecular weight), mol ↔ eq (requires charge)
+
+**Public API**:
+```typescript
+register(fromUnit: string, toUnit: string, converter: SpecialConversionFunction): void
+canConvert(fromUnit: string, toUnit: string): boolean
+convert(value: number, fromUnit: string, toUnit: string, options?: ConversionOptions): number | null
+isSpecialUnit(unit: string): boolean
+```
+
+### 4. UnitRegistry (`unit-registry.ts`)
 
 **Purpose**: Singleton registry for all UCUM units and prefixes
 
@@ -103,7 +138,7 @@ isValidUnit(code: string): boolean
 tryPrefixedUnit(code: string): { prefix: Prefix; unit: Unit } | undefined
 ```
 
-### 4. UCUMDisplayNameGenerator (`display-name.ts`)
+### 5. UCUMDisplayNameGenerator (`display-name.ts`)
 
 **Purpose**: Generates human-readable names for UCUM expressions
 
