@@ -62,13 +62,19 @@ Handle special cases like:
 
 1. [ ] Create `src/special-converter.ts` with SpecialConverter class
 2. [ ] Define SpecialConversionFunction type in `types.ts`
+7. [ ] Write a basic conceptual test for SpecialConverter in `src/special-converter.test.ts` for temperature conversions
 3. [ ] Implement temperature conversion functions
+7. [ ] Add tests for for logarithmic conversions
 4. [ ] Implement logarithmic conversion functions
 5. [ ] Register special conversions in converter initialization
 6. [ ] Update UCUMConverter to use SpecialConverter
-7. [ ] Add comprehensive unit tests
 8. [ ] Fix failing functional tests
-9. [ ] Update documentation
+9. [ ] Update documentation - especially in ./docs/architecture.md and corresponding components/ files
+10. [ ] Run `bun run typecheck` and fix all errors
+11. [ ] Run `bun run test` and try to fix all errors
+12. [ ] Update this task file with your progress
+13. [ ] Commit and push changes to github
+
 
 ## Test Cases
 
@@ -122,3 +128,5 @@ expect(converter.convert(273.15, 'K', 'Cel')).toBe(0);
 - UCUM Special Units: https://ucum.org/ucum#section-Special-Units
 - Temperature conversion formulas: Standard physics references
 - Logarithmic units: UCUM specification appendix
+
+Update this file with your progress.
